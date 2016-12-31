@@ -75,5 +75,5 @@ for ver in ${versions_to_install}; do
     #make clean || fail Unable to clean
     #make "CROSS=$cc" "MYARCH=$diet_ver" "prefix=${base}/$ver" "$diet_ver" all || fail Unable to build for $ver
     make clean || fail Unable to clean for $ver
-    make "CROSS=$cross" "ARCH=$diet_ver" "prefix2=-$ver" all install || fail Unable to build for $ver
+    make "CROSS=$cross" "ARCH=$diet_ver" "prefix2=-$ver$prefix3" FEATURES="$FEATURES" all install || fail Unable to build for $ver
 done
