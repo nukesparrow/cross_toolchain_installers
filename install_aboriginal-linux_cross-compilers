@@ -1,0 +1,57 @@
+#!/bin/bash
+
+all_versions="armv4l armv4tl armv5l armv6l i486 i586 i686 m68k mips mips64 mipsel powerpc-440fp powerpc sh2eb sh2elf sh4 sparc x86_64"
+versions_to_install="${all_versions}"
+#versions_to_install="armv4l i586 m68k mips mipsel powerpc sh4 sparc x86_64"
+#versions_to_install="i586"
+
+fail() {
+    echo $@ 1>&2
+    exit 1
+}
+
+dlfail() {
+    fail Download failed
+}
+
+base=${HOME}/opt/aboriginal-linux_cross-compilers
+ 
+mkdir -p ${base}
+cd ${base}
+
+install() {
+    version="$1"
+
+    url="http://landley.net/aboriginal/downloads/binaries/cross-compiler-${version}.tar.gz"
+    downloads="downloads"
+    filename="${downloads}/${version}.tar.gz"
+    path="${base}/${version}"
+
+    [ -e "$path" ] && {
+        echo Version for $version already installed
+        return 0
+    }
+
+    echo Missing: $path
+
+#    [ -e "$filename" ] || {
+        echo Downloading $version ...
+        [ -e "$downloads" ] || mkdir -p "$downloads"
+        wget -O "$filename" -c "$url" || fail Failed to download $version
+#    }
+
+    tar -xf "$filename" -C "${base}" || {
+        rm -rf "${path}"
+        fail Failed to extract $version
+    }
+
+}
+
+sample_path=""
+
+for ver in ${versions_to_install}; do
+    install "$ver"
+    sample_path="${sample_path}:${base}/cross-compiler-${ver}/bin"
+done
+
+echo -e "Do not forget to modify your PATH environment variable\n\n---\nexport PATH=\"\$PATH${sample_path}\"\n---"

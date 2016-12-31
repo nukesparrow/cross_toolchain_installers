@@ -1,0 +1,54 @@
+#!/bin/bash
+
+all_versions="armv4l armv5l i586 i686 m68k mips mipsel powerpc-440fp powerpc sh4 sparc x86_64"
+versions_to_install="${all_versions}"
+#versions_to_install="armv4l i586 m68k mips mipsel powerpc sh4 sparc x86_64"
+#versions_to_install="i586"
+
+fail() {
+    echo $@ 1>&2
+    exit 1
+}
+
+dlfail() {
+    fail Download failed
+}
+
+base=${HOME}/opt/uclibc.org-cross-compilers
+ 
+mkdir -p ${base}
+cd ${base}
+
+install() {
+    version="$1"
+    url="https://www.uclibc.org/downloads/binaries/0.9.30.1/cross-compiler-${version}.tar.bz2"
+    downloads="downloads"
+    filename="${downloads}/${version}.tar.bz2"
+    path="${base}/${version}"
+
+    [ -e "$path" ] && {
+        echo Version for $version already installed
+        return 0
+    }
+
+#    [ -e "$filename" ] || {
+        echo Downloading $version ...
+        [ -e "$downloads" ] || mkdir -p "$downloads"
+        wget -O "$filename" -c "$url" || fail Failed to download $version
+#    }
+
+    tar -jxf "$filename" -C "${base}" || {
+        rm -rf "${path}"
+        fail Failed to extract $version
+    }
+
+}
+
+sample_path=""
+
+for ver in ${versions_to_install}; do
+    install "$ver"
+    sample_path="${sample_path}:${base}/cross-compiler-${ver}/bin"
+done
+
+echo -e "Do not forget to modify your PATH environment variable\n\n---\nexport PATH=\"\$PATH${sample_path}\"\n---"

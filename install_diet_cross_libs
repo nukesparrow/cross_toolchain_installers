@@ -1,0 +1,79 @@
+#!/bin/bash
+
+. install_uclibc_cross-compilers
+
+uclibc_base="$base"
+
+#all_versions="armv4l armv5l i586 i686 m68k mips mipsel powerpc-440fp powerpc sh4 sparc x86_64"
+
+all_versions="i586 i686 mips mipsel  x86_64"
+#powerpc-440fp powerpc sh4 sparc
+
+versions_to_install="${all_versions}"
+
+fail() {
+    echo $@ 1>&2
+    exit 1
+}
+
+dlfail() {
+    fail Download failed
+}
+
+base=${HOME}/opt/dietlibc
+base_src=${HOME}/opt/src/
+ 
+mkdir -p ${base}
+cd ${base}
+
+src="${base}/src"
+mkdir -p "$src"
+
+#src_name="dietlibc-0.33"
+#src_path="${src}/${src_name}"
+#src_archive_name="${src_name}.tar.bz2"
+#src_url="https://www.fefe.de/dietlibc/${src_archive_name}"
+
+src_name="dietlibc"
+src_path="${base_src}${src_name}"
+src_git_url="git@github.com:nukesparrow/dietlibc.git"
+
+#[ -e "$src_path" ] || {
+#    #wget -O "$src_archive_name" -c "$src_url" || dlfail
+#    #tar -jxf "$src_archive_name" -C "$src" || fail Failed to extract
+#    mkdir -p "$base_src" && cd "$base_src" && git clone "$src_git_url"
+#}
+
+for ver in ${versions_to_install}; do
+    echo "Building dietlibc for $ver"
+
+    cflags=""
+    diet_ver=`echo "$ver" | sed -e 's/-.*//' -e 's/i[4-9]86/i386/' -e 's/armv[3-6]t\?e\?[lb]/arm/' -e 's/parisc64/parisc/'`
+
+    case "$ver" in
+        i[3-9]86)
+            diet_ver="i386"
+            cflags="-m32"
+            ;;
+        x86_64)
+            cflags="-m64"
+            ;;
+        *)
+            ;;
+    esac
+
+    if [ -e "${HOME}/opt/diet-$ver" ]; then
+        echo "$dietver already installed"
+        continue
+    fi
+    #echo "$dietver not installed @ ${HOME}/opt/diet-$ver"
+    #continue
+
+    cross="$uclibc_base/$ver/bin/$ver-"
+
+    cd "$src_path"
+    #make clean || fail Unable to clean
+    #make "CROSS=$cc" "MYARCH=$diet_ver" "prefix=${base}/$ver" "$diet_ver" all || fail Unable to build for $ver
+    make clean || fail Unable to clean for $ver
+    make "CROSS=$cross" "ARCH=$diet_ver" "prefix2=-$ver" all install || fail Unable to build for $ver
+done
